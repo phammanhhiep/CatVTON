@@ -55,6 +55,7 @@ class CatVTONPipeline:
             torch.set_float32_matmul_precision("high")
             torch.backends.cuda.matmul.allow_tf32 = True
 
+    # My note: load checkpoint from huggingface
     def auto_attn_ckpt_load(self, attn_ckpt, version):
         sub_folder = {
             "mix": "mix-48k-1024",
@@ -162,7 +163,7 @@ class CatVTONPipeline:
         # Denoising loop
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
         num_warmup_steps = (len(timesteps) - num_inference_steps * self.noise_scheduler.order)
-        with tqdm.tqdm(total=num_inference_steps) as progress_bar:
+        with tqdm.tqdm(total=num_inference_steps, disable=True) as progress_bar:
             for i, t in enumerate(timesteps):
                 # expand the latents if we are doing classifier free guidance
                 non_inpainting_latent_model_input = (torch.cat([latents] * 2) if do_classifier_free_guidance else latents)
@@ -216,17 +217,8 @@ class CatVTONPipeline:
 
 
 class CatVTONPix2PixPipeline(CatVTONPipeline):
-    def auto_attn_ckpt_load(self, attn_ckpt, version):
-        # TODO: Temperal fix for the model version
-        if os.path.exists(attn_ckpt):
-            load_checkpoint_in_model(self.attn_modules, os.path.join(attn_ckpt, version, 'attention'))
-        else:
-            repo_path = snapshot_download(repo_id=attn_ckpt)
-            print(f"Downloaded {attn_ckpt} to {repo_path}")
-            load_checkpoint_in_model(self.attn_modules, os.path.join(repo_path, version, 'attention'))
-    
     def check_inputs(self, image, condition_image, width, height):
-        if isinstance(image, torch.Tensor) and isinstance(condition_image, torch.Tensor) and isinstance(torch.Tensor):
+        if isinstance(image, torch.Tensor) and isinstance(condition_image, torch.Tensor):
             return image, condition_image
         image = resize_and_crop(image, (width, height))
         condition_image = resize_and_padding(condition_image, (width, height))
@@ -279,7 +271,7 @@ class CatVTONPix2PixPipeline(CatVTONPipeline):
         # Denoising loop
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
         num_warmup_steps = (len(timesteps) - num_inference_steps * self.noise_scheduler.order)
-        with tqdm.tqdm(total=num_inference_steps) as progress_bar:
+        with tqdm.tqdm(total=num_inference_steps, disable=True) as progress_bar:
             for i, t in enumerate(timesteps):
                 # expand the latents if we are doing classifier free guidance
                 latent_model_input = (torch.cat([latents] * 2) if do_classifier_free_guidance else latents)
