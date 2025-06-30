@@ -16,6 +16,7 @@ class SkipAttnProcessor(torch.nn.Module):
     ):
         return hidden_states
 
+# My Note: the code is the same as official AttnProcessor2_0, except extract but unused params in __init__.
 class AttnProcessor2_0(torch.nn.Module):
     r"""
     Processor for implementing scaled dot-product attention (enabled by default if you're using PyTorch 2.0).

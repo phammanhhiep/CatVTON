@@ -13,6 +13,7 @@ def init_adapter(unet,
         cross_attn_dim = unet.config.cross_attention_dim
     attn_procs = {}
     for name in unet.attn_processors.keys():
+        # My note: attn1 is a self-attention layer, and attn2 is a cross-attention layer.
         cross_attention_dim = None if name.endswith("attn1.processor") else cross_attn_dim
         if name.startswith("mid_block"):
             hidden_size = unet.config.block_out_channels[-1]

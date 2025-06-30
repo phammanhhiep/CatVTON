@@ -177,7 +177,7 @@ def repaint_result(result, person_image, mask_image):
     result_ = result * mask + person * (1 - mask)
     return Image.fromarray(result_.astype(np.uint8))
 
-
+# My note: concert to RGB if application, range normalization. The function is called in inference pipeline, but it should be better if being preprocessed within a dataset class.
 def prepare_image(image):
     if isinstance(image, torch.Tensor):
         # Batch single image

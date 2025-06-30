@@ -55,7 +55,7 @@ class CatVTONPipeline:
             torch.set_float32_matmul_precision("high")
             torch.backends.cuda.matmul.allow_tf32 = True
 
-    # My note: load checkpoint from huggingface
+    # My note: load trained checkpoint from huggingface; this is the trained params from the research
     def auto_attn_ckpt_load(self, attn_ckpt, version):
         sub_folder = {
             "mix": "mix-48k-1024",
@@ -83,9 +83,11 @@ class CatVTONPipeline:
         if isinstance(image, torch.Tensor) and isinstance(condition_image, torch.Tensor) and isinstance(mask, torch.Tensor):
             return image, condition_image, mask
         assert image.size == mask.size, "Image and mask must have the same size"
+        # My Note: should be preprocessed in dataset class. 
         image = resize_and_crop(image, (width, height))
         mask = resize_and_crop(mask, (width, height))
         condition_image = resize_and_padding(condition_image, (width, height))
+        ############# End comment #########################
         return image, condition_image, mask
     
     def prepare_extra_step_kwargs(self, generator, eta):
