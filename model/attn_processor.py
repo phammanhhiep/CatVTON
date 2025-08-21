@@ -1,6 +1,7 @@
 from torch.nn import functional as F
 import torch
 # from flash_attn import flash_attn_func
+from diffusers.models.attention_processor import AttnProcessor2_0 as OriginalAttnProcessor2_0
 
 class SkipAttnProcessor(torch.nn.Module):
     def __init__(self, *args, **kwargs) -> None:
@@ -9,12 +10,21 @@ class SkipAttnProcessor(torch.nn.Module):
     def __call__(
         self,
         attn,
-        hidden_states,
-        encoder_hidden_states=None,
-        attention_mask=None,
-        temb=None,
+        hidden_states, 
+        *args, 
+        **kwargs,
     ):
         return hidden_states
+
+
+class AttnProcessor2_0_Copy(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.attn = OriginalAttnProcessor2_0()
+
+    def __call__(self, *args, **kwargs):
+        return self.attn(*args, **kwargs)
+
 
 # My Note: the code is the same as official AttnProcessor2_0, except extract but unused params in __init__.
 class AttnProcessor2_0(torch.nn.Module):

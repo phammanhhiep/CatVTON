@@ -1,9 +1,9 @@
 import os
 import json
 import torch
-from model.attn_processor import AttnProcessor2_0, SkipAttnProcessor 
+from model.attn_processor import AttnProcessor2_0, SkipAttnProcessor, AttnProcessor2_0_Copy
 
-
+# My note: attn1 is often always self-attention processor, while attn2 is cross attention processor.
 def init_adapter(unet, 
                  cross_attn_cls=SkipAttnProcessor,
                  self_attn_cls=None,
@@ -15,22 +15,25 @@ def init_adapter(unet,
     for name in unet.attn_processors.keys():
         # My note: attn1 is a self-attention layer, and attn2 is a cross-attention layer.
         cross_attention_dim = None if name.endswith("attn1.processor") else cross_attn_dim
-        if name.startswith("mid_block"):
-            hidden_size = unet.config.block_out_channels[-1]
-        elif name.startswith("up_blocks"):
-            block_id = int(name[len("up_blocks.")])
-            hidden_size = list(reversed(unet.config.block_out_channels))[block_id]
-        elif name.startswith("down_blocks"):
-            block_id = int(name[len("down_blocks.")])
-            hidden_size = unet.config.block_out_channels[block_id]
+        hidden_size = 0
+        # if name.startswith("mid_block"):
+        #     hidden_size = unet.config.block_out_channels[-1]
+        # elif name.startswith("up_blocks"):
+        #     block_id = int(name[len("up_blocks.")])
+        #     hidden_size = list(reversed(unet.config.block_out_channels))[block_id]
+        # elif name.startswith("down_blocks"):
+        #     block_id = int(name[len("down_blocks.")])
+        #     hidden_size = unet.config.block_out_channels[block_id]
         if cross_attention_dim is None:
             if self_attn_cls is not None:
                 attn_procs[name] = self_attn_cls(hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, **kwargs)
             else:
                 # retain the original attn processor
-                attn_procs[name] = AttnProcessor2_0(hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, **kwargs)
+                # attn_procs[name] = AttnProcessor2_0(hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, **kwargs)
+                attn_procs[name] = AttnProcessor2_0_Copy()
         else:
-            attn_procs[name] = cross_attn_cls(hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, **kwargs)
+            # attn_procs[name] = cross_attn_cls(hidden_size=hidden_size, cross_attention_dim=cross_attention_dim, **kwargs)
+            attn_procs[name] = cross_attn_cls()
                                                     
     unet.set_attn_processor(attn_procs)
     adapter_modules = torch.nn.ModuleList(unet.attn_processors.values())
